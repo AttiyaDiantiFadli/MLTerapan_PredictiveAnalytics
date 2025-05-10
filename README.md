@@ -1,12 +1,10 @@
-# Laporan Proyek Machine Learning – \[Nama Anda]
+# Laporan Proyek Machine Learning – \[Attiya Dianti Fadli]
 
 ## Domain Proyek
 
 Domain yang diangkat dalam proyek *machine learning* ini adalah **Kesehatan**, dengan judul **Prediksi Penyakit Jantung**.
 
 ### Latar Belakang
-
-![Ilustrasi jantung sehat](https://i.ibb.co/h1fK0dM/heart-health.jpg)
 
 Penyakit jantung merupakan penyebab kematian nomor satu di dunia menurut World Health Organization (WHO). Pada tahun 2019, sekitar 17,9 juta orang meninggal karena penyakit kardiovaskular, yang mewakili 32% dari seluruh kematian global. \[[1](https://www.who.int/news-room/fact-sheets/detail/cardiovascular-diseases-%28cvds%29)] Di Indonesia, penyakit jantung juga menjadi ancaman serius bagi masyarakat dan sistem kesehatan. Berdasarkan data Riskesdas 2018, prevalensi penyakit jantung mencapai 1,5% dari populasi. \[[2](https://pusdatin.kemkes.go.id/resources/download/pusdatin/lain-lain/InfoDatin-Jantung.pdf)]
 
