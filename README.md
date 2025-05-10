@@ -125,4 +125,138 @@ Gambar 2b. Distribusi Fitur Kategorikal
 
 Distribusi fitur numerik dan kategorikal ini memberikan pemahaman awal terhadap bagaimana fitur-fitur dapat digunakan untuk prediksi penyakit jantung.
 
+## Data Preparation
+
+Sebelum membangun model prediksi, tahap *data preparation* sangat penting untuk memastikan bahwa data yang digunakan memenuhi standar kualitas yang dibutuhkan oleh algoritma *machine learning*. Proses ini mencakup encoding fitur kategorikal, normalisasi fitur numerik, serta pembagian data menjadi set pelatihan dan pengujian. Berikut tahapan yang dilakukan dalam proyek ini:
+
+###  Encoding Variabel Kategorikal
+
+Dataset ini mengandung beberapa fitur kategorikal seperti `ChestPainType`, `RestingECG`, `ExerciseAngina`, dan `ST_Slope`. Karena sebagian besar algoritma *machine learning* tidak dapat bekerja langsung dengan data dalam format string, maka dilakukan encoding menggunakan teknik **One-Hot Encoding**.
+
+One-Hot Encoding dipilih karena fitur-fitur tersebut bersifat nominal (tidak memiliki urutan) sehingga setiap kategori direpresentasikan sebagai kolom biner terpisah. Teknik ini membantu model dalam memahami perbedaan antar kategori tanpa mengasumsikan adanya hubungan ordinal.
+
+###  Normalisasi Fitur Numerik
+
+Beberapa fitur numerik seperti `Age`, `RestingBP`, `Cholesterol`, `MaxHR`, dan `Oldpeak` memiliki skala yang berbeda. Untuk memastikan semua fitur memiliki kontribusi yang seimbang dalam proses pelatihan model, dilakukan normalisasi menggunakan **Min-Max Scaler**.
+
+Rumus Min-Max Scaling digunakan sebagai berikut:
+
+$$
+x' = \frac{x - x_{min}}{x_{max} - x_{min}}
+$$
+
+Teknik ini efektif digunakan pada algoritma yang sensitif terhadap skala data, seperti *Logistic Regression* dan *PassiveAggressiveClassifier*. Selain itu, normalisasi juga mempercepat proses konvergensi dan meningkatkan stabilitas model.
+
+###  Pembagian Data (Train-Test Split)
+
+Setelah proses transformasi selesai, data dibagi menjadi dua bagian:
+
+- **Data Latih (Train Set)** sebesar 80%
+- **Data Uji (Test Set)** sebesar 20%
+
+Pembagian ini dilakukan secara acak menggunakan fungsi `train_test_split` dari Scikit-Learn, dengan parameter `random_state=42` untuk memastikan hasil yang dapat direproduksi (*reproducibility*). Tujuannya adalah agar model dapat belajar dari sebagian besar data dan diuji performanya terhadap data yang belum pernah dilihat sebelumnya. Hal ini sangat penting untuk mengukur kemampuan generalisasi model terhadap data baru.
+
+###  Penanganan Outlier (Observasi)
+
+Berdasarkan eksplorasi data sebelumnya, fitur `Cholesterol` menunjukkan adanya outlier yang cukup ekstrem. Namun, karena data sudah relatif bersih dan tidak ada nilai yang hilang, serta untuk menjaga agar distribusi data tetap alami, maka outlier tidak dihapus. Model *tree-based* seperti **Random Forest** dan **Extra Trees** cenderung cukup tangguh terhadap outlier, sehingga penghapusan atau transformasi lebih lanjut tidak diperlukan pada tahap ini.
+
+## Modeling
+
+Untuk menyelesaikan permasalahan klasifikasi risiko penyakit jantung, beberapa algoritma *machine learning* digunakan dan dibandingkan performanya. Tahapan modeling mencakup pelatihan model, evaluasi awal, serta pemilihan model terbaik berdasarkan metrik yang relevan.
+
+### Algoritma yang Digunakan
+
+Beberapa algoritma klasifikasi yang digunakan dalam proyek ini antara lain:
+
+#### a. Logistic Regression
+
+- **Parameter utama**:
+  - `solver='liblinear'`
+  - `random_state=42`
+- **Kelebihan**:
+  - Cepat dan efisien untuk dataset kecil-menengah.
+  - Mudah diinterpretasi.
+  - Cocok sebagai baseline model.
+- **Kekurangan**:
+  - Kurang mampu menangani data yang tidak linier secara kompleks.
+  - Sensitif terhadap multikolinearitas antar fitur.
+
+#### b. PassiveAggressiveClassifier
+
+- **Parameter utama**:
+  - `C=0.5`
+  - `max_iter=1000`
+- **Kelebihan**:
+  - Sangat cepat, cocok untuk *online learning*.
+  - Tidak memerlukan normalisasi label.
+- **Kekurangan**:
+  - Rentan terhadap outlier.
+  - Tidak seakurat model ensemble dalam prediksi kompleks.
+
+#### c. Bernoulli Naive Bayes
+
+- **Kelebihan**:
+  - Cocok untuk fitur biner atau kategorikal hasil encoding.
+  - Cepat dan sederhana.
+- **Kekurangan**:
+  - Asumsi independensi antar fitur sering tidak realistis.
+  - Performa bisa rendah jika fitur tidak mengikuti distribusi Bernoulli.
+
+#### d. Extra Trees Classifier
+
+- **Parameter utama**:
+  - `n_estimators=100`
+  - `random_state=42`
+- **Kelebihan**:
+  - Proses pelatihan cepat dengan akurasi tinggi.
+  - Mengurangi variansi karena menggunakan banyak pohon acak.
+- **Kekurangan**:
+  - Kurang interpretatif.
+  - Cenderung memerlukan lebih banyak memori.
+
+#### e. Random Forest Classifier
+
+- **Parameter awal**:
+  - `n_estimators=100`
+  - `max_depth=None`
+  - `random_state=42`
+- **Kelebihan**:
+  - Akurasi tinggi.
+  - Robust terhadap outlier dan overfitting.
+- **Kekurangan**:
+  - Proses pelatihan relatif lambat dibanding model linear.
+  - Sulit diinterpretasi.
+ 
+## Evaluation
+
+Dalam tahap evaluasi, metrik yang digunakan adalah `accuracy`.  
+Accuracy didapatkan dengan menghitung persentase dari jumlah prediksi yang benar dibagi dengan jumlah seluruh prediksi. Rumus:
+
+$$\text{Accuracy} = \frac{\text{TP + TN}}{\text{TN + TP + FN + FP}} \times 100\%$$
+
+*Penjelasan*
+- TP (True Positive): Jumlah data positif yang diprediksi dengan benar sebagai positif.
+- TN (True Negative): Jumlah data negatif yang diprediksi dengan benar sebagai negatif.
+- FP (False Positive): Jumlah data negatif yang diprediksi secara tidak benar sebagai positif (Kesalahan Tipe I).
+- FN (False Negative): Jumlah data positif yang diprediksi secara tidak benar sebagai negatif (Kesalahan Tipe II).
+
+Rumus ini memecah akurasi menjadi rasio antara data yang diklasifikasikan dengan benar (TP dan TN) dengan jumlah total data. Mengalikan dengan 100% mengubah rasio menjadi persentase.
+
+Berikut hasil accuracy 5 buah model yang dilatih:
+
+| Model                         | Accuracy |
+|-------------------------------|----------|
+| Logistic Regression           | 86%     |
+| RandomForest                  | 83%     |
+| Bernoulli Naive Bayes         | 83%     |
+| Extra Trees Classifier        | 82%     |
+| Passive Aggressive Classifier | 78%     |
+
+Tabel 3. Hasil Accuracy
+
+![Plot Accuracy](img/3.png)
+
+Gambar 3. Visualisasi Accuracy Model
+
+Dilihat dari *Tabel 3. Hasil Accuracy* dan *Gambar 3. Visualisasi Accuracy Model* tersebut dapat diketahui bahwa model dengan algoritma **Logistic Regression** memiliki Accuracy yang lebih tinggi dengan akurasi `86%`. Untuk itu, model tersebut yang akan dipilih untuk digunakan. Diharapkan dengan model yang telah dikembangkan dapat memprediksi risiko penyakit jantung dengan baik menggunakan **Logistic Regression**. Alasan mengapa metode **Logistic Regression** yang dipilih adalah karena algoritma ini relatif sederhana dan banyak digunakan dalam masalah klasifikasi medis. Selain itu, **Logistic Regression** mudah untuk diimplementasikan dan diinterpretasikan, serta memberikan probabilitas yang jelas tentang klasifikasi, yang sangat berguna dalam konteks prediksi penyakit jantung.
 
