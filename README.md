@@ -129,11 +129,43 @@ Distribusi fitur numerik dan kategorikal ini memberikan pemahaman awal terhadap 
 
 Sebelum membangun model prediksi, tahap *data preparation* sangat penting untuk memastikan bahwa data yang digunakan memenuhi standar kualitas yang dibutuhkan oleh algoritma *machine learning*. Proses ini mencakup encoding fitur kategorikal, normalisasi fitur numerik, serta pembagian data menjadi set pelatihan dan pengujian. Berikut tahapan yang dilakukan dalam proyek ini:
 
-###  Encoding Variabel Kategorikal
+### Data Cleaning
 
-Dataset ini mengandung beberapa fitur kategorikal seperti `ChestPainType`, `RestingECG`, `ExerciseAngina`, dan `ST_Slope`. Karena sebagian besar algoritma *machine learning* tidak dapat bekerja langsung dengan data dalam format string, maka dilakukan encoding menggunakan teknik **One-Hot Encoding**.
+Pada tahap ini, kolom `HeartDisease` diubah menjadi nilai numerik boolean, di mana:
 
-One-Hot Encoding dipilih karena fitur-fitur tersebut bersifat nominal (tidak memiliki urutan) sehingga setiap kategori direpresentasikan sebagai kolom biner terpisah. Teknik ini membantu model dalam memahami perbedaan antar kategori tanpa mengasumsikan adanya hubungan ordinal.
+- Nilai 1 menunjukkan adanya penyakit jantung
+- Nilai 0 menunjukkan tidak ada penyakit jantung
+
+Peringatan `SettingWithCopyWarning` muncul karena perubahan dilakukan langsung pada DataFrame, namun ini tidak mempengaruhi hasil akhir. Selain itu, dataset juga dipisahkan menjadi dua bagian: fitur (X) dan target (y).
+
+- **Fitur** berisi semua kolom kecuali 'HeartDisease'
+- **Target** adalah kolom 'HeartDisease'
+
+Dimensi fitur: (588, 11), dimensi target: (588,)
+
+### Pembagian Data (Train-Test Split)
+
+Setelah data dibersihkan, data dibagi menjadi dua bagian, yaitu:
+
+- **Data Latih (Train Set)** sebesar 80% dari total dataset
+- **Data Uji (Test Set)** sebesar 20% dari total dataset
+
+Pembagian ini dilakukan secara acak menggunakan fungsi `train_test_split` dari Scikit-Learn, dengan parameter `random_state=42` untuk memastikan hasil yang dapat direproduksi (*reproducibility*). Pembagian dilakukan dengan stratifikasi berdasarkan target, untuk memastikan distribusi yang seimbang antara data latih dan data uji. Berikut adalah detail pembagiannya:
+
+- Jumlah total dataset: 588
+- Jumlah data latih: 470
+- Jumlah data uji: 118
+
+Tujuan pembagian ini adalah agar model dapat belajar dari sebagian besar data dan diuji performanya terhadap data yang belum pernah dilihat sebelumnya, sehingga dapat mengukur kemampuan generalisasi model terhadap data baru.
+
+#### Encoding Variabel Kategorikal
+
+Dataset ini mengandung beberapa fitur kategorikal seperti `Sex`, `ChestPainType`, `RestingECG`, `ExerciseAngina`, dan `ST_Slope`. Karena sebagian besar algoritma *machine learning* tidak dapat bekerja langsung dengan data dalam format string, maka dilakukan encoding menggunakan teknik **One-Hot Encoding**.
+
+One-Hot Encoding dipilih karena fitur-fitur tersebut bersifat nominal (tidak memiliki urutan), sehingga setiap kategori direpresentasikan sebagai kolom biner terpisah. Teknik ini membantu model dalam memahami perbedaan antar kategori tanpa mengasumsikan adanya hubungan ordinal.
+
+Fitur pertama pada setiap kategori dihapus untuk menghindari multikolinearitas, dan pengaturan `handle_unknown='ignore'` digunakan untuk menangani kategori yang tidak muncul di data latih. Dengan demikian, model dapat tetap berfungsi meskipun terdapat kategori baru di data uji yang tidak ada pada data latih.
+
 
 ###  Normalisasi Fitur Numerik
 
@@ -147,116 +179,133 @@ $$
 
 Teknik ini efektif digunakan pada algoritma yang sensitif terhadap skala data, seperti *Logistic Regression* dan *PassiveAggressiveClassifier*. Selain itu, normalisasi juga mempercepat proses konvergensi dan meningkatkan stabilitas model.
 
-###  Pembagian Data (Train-Test Split)
-
-Setelah proses transformasi selesai, data dibagi menjadi dua bagian:
-
-- **Data Latih (Train Set)** sebesar 80%
-- **Data Uji (Test Set)** sebesar 20%
-
-Pembagian ini dilakukan secara acak menggunakan fungsi `train_test_split` dari Scikit-Learn, dengan parameter `random_state=42` untuk memastikan hasil yang dapat direproduksi (*reproducibility*). Tujuannya adalah agar model dapat belajar dari sebagian besar data dan diuji performanya terhadap data yang belum pernah dilihat sebelumnya. Hal ini sangat penting untuk mengukur kemampuan generalisasi model terhadap data baru.
-
-###  Penanganan Outlier (Observasi)
-
-Berdasarkan eksplorasi data sebelumnya, fitur `Cholesterol` menunjukkan adanya outlier yang cukup ekstrem. Namun, karena data sudah relatif bersih dan tidak ada nilai yang hilang, serta untuk menjaga agar distribusi data tetap alami, maka outlier tidak dihapus. Model *tree-based* seperti **Random Forest** dan **Extra Trees** cenderung cukup tangguh terhadap outlier, sehingga penghapusan atau transformasi lebih lanjut tidak diperlukan pada tahap ini.
-
 ## Modeling
 
 Untuk menyelesaikan permasalahan klasifikasi risiko penyakit jantung, beberapa algoritma *machine learning* digunakan dan dibandingkan performanya. Tahapan modeling mencakup pelatihan model, evaluasi awal, serta pemilihan model terbaik berdasarkan metrik yang relevan.
 
 ### Algoritma yang Digunakan
 
-Beberapa algoritma klasifikasi yang digunakan dalam proyek ini antara lain:
+Berikut adalah algoritma klasifikasi yang digunakan dalam proyek ini, lengkap dengan konsep kerjanya, kelebihan, kekurangan, serta parameter utama yang digunakan.
 
 #### a. Logistic Regression
+
+**Konsep**: Logistic Regression adalah model linear yang digunakan untuk tugas klasifikasi. Model ini memprediksi probabilitas kelas dengan menggunakan fungsi sigmoid untuk mengubah output linier menjadi nilai antara 0 dan 1.
 
 - **Parameter utama**:
   - `solver='liblinear'`
   - `random_state=42`
 - **Kelebihan**:
-  - Cepat dan efisien untuk dataset kecil-menengah.
-  - Mudah diinterpretasi.
-  - Cocok sebagai baseline model.
+  - Cepat dan efisien untuk dataset kecil hingga menengah.
+  - Mudah diinterpretasi dan dijadikan baseline.
 - **Kekurangan**:
-  - Kurang mampu menangani data yang tidak linier secara kompleks.
-  - Sensitif terhadap multikolinearitas antar fitur.
+  - Kurang efektif untuk relasi non-linear antar fitur.
+  - Sensitif terhadap multikolinearitas.
 
-#### b. PassiveAggressiveClassifier
+#### b. Passive Aggressive Classifier
+
+**Konsep**: Merupakan algoritma linear yang dirancang untuk *online learning*, di mana model diperbarui secara agresif hanya ketika melakukan kesalahan prediksi. Bersifat “passive” jika prediksi benar, dan “aggressive” jika salah.
 
 - **Parameter utama**:
   - `C=0.5`
   - `max_iter=1000`
 - **Kelebihan**:
-  - Sangat cepat, cocok untuk *online learning*.
+  - Sangat cepat dan efisien untuk data besar atau streaming.
   - Tidak memerlukan normalisasi label.
 - **Kekurangan**:
   - Rentan terhadap outlier.
-  - Tidak seakurat model ensemble dalam prediksi kompleks.
+  - Performa bisa tidak stabil untuk data non-seimbang.
 
 #### c. Bernoulli Naive Bayes
 
+**Konsep**: Algoritma probabilistik berbasis Teorema Bayes dengan asumsi kuat bahwa setiap fitur bersifat independen. Bernoulli NB secara khusus digunakan untuk fitur biner (0 atau 1).
+
 - **Kelebihan**:
-  - Cocok untuk fitur biner atau kategorikal hasil encoding.
-  - Cepat dan sederhana.
+  - Cepat dan efisien, cocok untuk data hasil One-Hot Encoding.
+  - Performa baik meskipun dengan data kecil.
 - **Kekurangan**:
-  - Asumsi independensi antar fitur sering tidak realistis.
-  - Performa bisa rendah jika fitur tidak mengikuti distribusi Bernoulli.
+  - Asumsi independensi antar fitur sering kali tidak terpenuhi.
+  - Tidak cocok untuk data numerik kontinu tanpa transformasi.
 
 #### d. Extra Trees Classifier
+
+**Konsep**: Ensemble dari pohon keputusan yang mirip dengan Random Forest, namun lebih banyak melakukan randomisasi dalam pemilihan fitur dan titik split, yang dapat mengurangi variansi model.
 
 - **Parameter utama**:
   - `n_estimators=100`
   - `random_state=42`
 - **Kelebihan**:
-  - Proses pelatihan cepat dengan akurasi tinggi.
-  - Mengurangi variansi karena menggunakan banyak pohon acak.
+  - Pelatihan cepat dan mampu menangkap relasi kompleks.
+  - Lebih tahan terhadap overfitting dibanding model tunggal.
 - **Kekurangan**:
-  - Kurang interpretatif.
-  - Cenderung memerlukan lebih banyak memori.
+  - Sulit diinterpretasikan.
+  - Lebih boros memori dan sumber daya komputasi.
 
 #### e. Random Forest Classifier
 
-- **Parameter awal**:
+**Konsep**: Merupakan algoritma ensemble yang menggabungkan banyak pohon keputusan untuk meningkatkan akurasi dan mengurangi overfitting. Setiap pohon dilatih dengan subset acak dari data dan fitur.
+
+- **Parameter utama**:
   - `n_estimators=100`
   - `max_depth=None`
   - `random_state=42`
 - **Kelebihan**:
-  - Akurasi tinggi.
-  - Robust terhadap outlier dan overfitting.
+  - Akurasi tinggi dan tahan terhadap noise serta outlier.
+  - Tidak mudah overfitting karena mekanisme voting antar pohon.
 - **Kekurangan**:
-  - Proses pelatihan relatif lambat dibanding model linear.
-  - Sulit diinterpretasi.
+  - Proses pelatihan bisa memakan waktu lebih lama.
+  - Kurang transparan dalam interpretasi dibanding model linear.
  
 ## Evaluation
 
-Dalam tahap evaluasi, metrik yang digunakan adalah `accuracy`.  
-Accuracy didapatkan dengan menghitung persentase dari jumlah prediksi yang benar dibagi dengan jumlah seluruh prediksi. Rumus:
+Tahap evaluasi berfungsi untuk mengukur performa model dan memastikan apakah solusi yang dikembangkan mampu menjawab *problem statement* serta mencapai *business goals* yang telah ditentukan pada tahap *Business Understanding*.
 
-$$\text{Accuracy} = \frac{\text{TP + TN}}{\text{TN + TP + FN + FP}} \times 100\%$$
+### Metrik Evaluasi: Accuracy
 
-*Penjelasan*
-- TP (True Positive): Jumlah data positif yang diprediksi dengan benar sebagai positif.
-- TN (True Negative): Jumlah data negatif yang diprediksi dengan benar sebagai negatif.
-- FP (False Positive): Jumlah data negatif yang diprediksi secara tidak benar sebagai positif (Kesalahan Tipe I).
-- FN (False Negative): Jumlah data positif yang diprediksi secara tidak benar sebagai negatif (Kesalahan Tipe II).
+Metrik utama yang digunakan dalam evaluasi adalah **Accuracy**, yaitu persentase prediksi yang benar terhadap total keseluruhan prediksi. Rumus perhitungan:
 
-Rumus ini memecah akurasi menjadi rasio antara data yang diklasifikasikan dengan benar (TP dan TN) dengan jumlah total data. Mengalikan dengan 100% mengubah rasio menjadi persentase.
+$$
+\text{Accuracy} = \frac{\text{TP + TN}}{\text{TP + TN + FP + FN}} \times 100\%
+$$
 
-Berikut hasil accuracy 5 buah model yang dilatih:
+**Penjelasan:**
+- **TP (True Positive)**: Data positif yang diklasifikasikan benar.
+- **TN (True Negative)**: Data negatif yang diklasifikasikan benar.
+- **FP (False Positive)**: Data negatif yang salah diklasifikasikan sebagai positif (*False Alarm*).
+- **FN (False Negative)**: Data positif yang salah diklasifikasikan sebagai negatif (*Missed Detection*).
+
+### Hasil Evaluasi Model
+
+Berikut hasil akurasi dari lima model yang diuji:
 
 | Model                         | Accuracy |
 |-------------------------------|----------|
-| Logistic Regression           | 86%     |
-| RandomForest                  | 83%     |
-| Bernoulli Naive Bayes         | 83%     |
-| Extra Trees Classifier        | 82%     |
-| Passive Aggressive Classifier | 78%     |
+| Logistic Regression           | **86%**  |
+| Random Forest                 | 83%      |
+| Bernoulli Naive Bayes         | 83%      |
+| Extra Trees Classifier        | 82%      |
+| Passive Aggressive Classifier | 78%      |
 
-Tabel 3. Hasil Accuracy
+**Tabel 3.** Hasil Accuracy
 
 ![Plot Accuracy](img/3.png)
 
-Gambar 3. Visualisasi Accuracy Model
+**Gambar 3.** Visualisasi Accuracy Model
 
-Dilihat dari *Tabel 3. Hasil Accuracy* dan *Gambar 3. Visualisasi Accuracy Model* tersebut dapat diketahui bahwa model dengan algoritma **Logistic Regression** memiliki Accuracy yang lebih tinggi dengan akurasi `86%`. Untuk itu, model tersebut yang akan dipilih untuk digunakan. Diharapkan dengan model yang telah dikembangkan dapat memprediksi risiko penyakit jantung dengan baik menggunakan **Logistic Regression**. Alasan mengapa metode **Logistic Regression** yang dipilih adalah karena algoritma ini relatif sederhana dan banyak digunakan dalam masalah klasifikasi medis. Selain itu, **Logistic Regression** mudah untuk diimplementasikan dan diinterpretasikan, serta memberikan probabilitas yang jelas tentang klasifikasi, yang sangat berguna dalam konteks prediksi penyakit jantung.
+### Analisis Hasil dan Dampak terhadap Business Understanding
 
+Dari hasil di atas, model **Logistic Regression** menunjukkan performa terbaik dengan akurasi sebesar **86%**, sekaligus menjadi model yang dipilih untuk digunakan.
+
+**Hubungan dengan Business Understanding:**
+
+- **Problem Statement:**  
+  Tujuan proyek ini adalah untuk membantu memprediksi risiko penyakit jantung berdasarkan data pasien. Model Logistic Regression mampu mengklasifikasikan risiko dengan cukup baik dan akurat, menjawab kebutuhan sistem prediksi yang cepat dan andal di lingkungan medis.
+
+- **Goal yang Diharapkan:**  
+  Model bertujuan memberikan prediksi **yang akurat dan mudah diinterpretasi** bagi tenaga medis. Dengan 86% akurasi dan kemampuan interpretasi koefisien yang dimiliki Logistic Regression, goal ini berhasil dicapai.
+
+- **Dampak Solusi:**  
+  Penggunaan model ini dapat membantu dokter dan klinik dalam melakukan **skrining awal terhadap pasien** tanpa perlu pemeriksaan mahal terlebih dahulu. Pasien berisiko tinggi dapat segera diarahkan ke pemeriksaan lanjutan, sementara pasien dengan risiko rendah dapat meminimalkan biaya dan waktu tunggu. Ini memberikan **efisiensi operasional dan peningkatan kualitas layanan medis**.
+
+### Kesimpulan
+
+Model **Logistic Regression** tidak hanya unggul dalam metrik akurasi, tetapi juga memenuhi aspek penting dalam dunia nyata, yaitu interpretabilitas, efisiensi, dan relevansi medis. Dengan kata lain, solusi ini **tidak hanya tepat secara teknis**, tapi juga **berdampak secara bisnis**, mendukung pengambilan keputusan klinis yang lebih cepat dan berbasis data.
