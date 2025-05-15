@@ -219,6 +219,10 @@ Berikut adalah algoritma klasifikasi yang digunakan dalam proyek ini, lengkap de
 
 **Konsep**: Algoritma probabilistik berbasis Teorema Bayes dengan asumsi kuat bahwa setiap fitur bersifat independen. Bernoulli NB secara khusus digunakan untuk fitur biner (0 atau 1).
 
+- **Parameter utama**:
+  - `alpha=1.0` (nilai smoothing Laplace/Lidstone untuk menghindari pembagian nol)
+  - `binarize=0.0` (nilai ambang batas untuk membinarisasi input; jika data sudah biner, biasanya tidak diubah)
+  - `fit_prior=True` (menggunakan distribusi prior kelas berdasarkan data latih)
 - **Kelebihan**:
   - Cepat dan efisien, cocok untuk data hasil One-Hot Encoding.
   - Performa baik meskipun dengan data kecil.
@@ -259,52 +263,79 @@ Berikut adalah algoritma klasifikasi yang digunakan dalam proyek ini, lengkap de
 
 Tahap evaluasi berfungsi untuk mengukur performa model dan memastikan apakah solusi yang dikembangkan mampu menjawab *problem statement* serta mencapai *business goals* yang telah ditentukan pada tahap *Business Understanding*.
 
-### Metrik Evaluasi: Accuracy
+### Metrik Evaluasi
 
-Metrik utama yang digunakan dalam evaluasi adalah **Accuracy**, yaitu persentase prediksi yang benar terhadap total keseluruhan prediksi. Rumus perhitungan:
+Beberapa metrik digunakan untuk mengevaluasi performa model klasifikasi secara komprehensif:
+
+#### 1. Accuracy
+
+Persentase prediksi yang benar terhadap total keseluruhan prediksi.
 
 $$
-\text{Accuracy} = \frac{\text{TP + TN}}{\text{TP + TN + FP + FN}} \times 100\%
+\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN} \times 100\%
 $$
 
-**Penjelasan:**
-- **TP (True Positive)**: Data positif yang diklasifikasikan benar.
-- **TN (True Negative)**: Data negatif yang diklasifikasikan benar.
-- **FP (False Positive)**: Data negatif yang salah diklasifikasikan sebagai positif (*False Alarm*).
-- **FN (False Negative)**: Data positif yang salah diklasifikasikan sebagai negatif (*Missed Detection*).
+#### 2. Precision
+
+Mengukur seberapa banyak prediksi positif yang benar-benar positif (*reliability of positive prediction*).
+
+$$
+\text{Precision} = \frac{TP}{TP + FP}
+$$
+
+#### 3. Recall (Sensitivity)
+
+Mengukur seberapa banyak data positif yang berhasil teridentifikasi dengan benar (*ability to detect positive cases*).
+
+$$
+\text{Recall} = \frac{TP}{TP + FN}
+$$
+
+#### 4. F1-Score
+
+Merupakan harmonic mean dari Precision dan Recall. Cocok digunakan saat terjadi ketidakseimbangan kelas dan ingin mengoptimalkan keduanya secara bersamaan.
+
+$$
+\text{F1 Score} = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
+$$
+
+> **Catatan Penting (Konstek Medis)**  
+Dalam kasus medis seperti prediksi penyakit jantung:
+- **False Negative (FN)** berbahaya karena pasien yang sebenarnya berisiko tidak terdeteksi.
+- **Recall** menjadi sangat penting agar kasus berisiko tidak terlewatkan.
+- **Precision** juga penting agar tidak terlalu banyak "alarm palsu" (False Positive).
 
 ### Hasil Evaluasi Model
 
-Berikut hasil akurasi dari lima model yang diuji:
+Berikut adalah ringkasan performa model berdasarkan metrik-metrik utama:
 
-| Model                         | Accuracy |
-|-------------------------------|----------|
-| Logistic Regression           | **86%**  |
-| Random Forest                 | 83%      |
-| Bernoulli Naive Bayes         | 83%      |
-| Extra Trees Classifier        | 82%      |
-| Passive Aggressive Classifier | 78%      |
+| Model                         | Accuracy | Precision | Recall | F1-Score |
+|-------------------------------|----------|-----------|--------|----------|
+| Logistic Regression           | **86.4%**| 80.4%     | **90.0%** | **84.9%**  |
+| Random Forest                 | 83.9%    | 77.2%     | 88.0%  | 82.2%   |
+| Bernoulli Naive Bayes         | 83.1%    | 75.9%     | 88.0%  | 81.5%   |
+| Extra Trees Classifier        | 82.2%    | 75.4%     | 86.0%  | 80.4%   |
+| Passive Aggressive Classifier | 78.8%    | 77.8%     | 70.0%  | 73.7%   |
 
-**Tabel 3.** Hasil Accuracy
+**Tabel 3.** Ringkasan Hasil Evaluasi Model
 
-![Plot Accuracy](img/3.png)
-
+![Plot Accuracy](img/3.png)  
 **Gambar 3.** Visualisasi Accuracy Model
 
-### Analisis Hasil dan Dampak terhadap Business Understanding
+### Analisis Hasil dan Relevansi terhadap Business Understanding
 
-Dari hasil di atas, model **Logistic Regression** menunjukkan performa terbaik dengan akurasi sebesar **86%**, sekaligus menjadi model yang dipilih untuk digunakan.
+Model **Logistic Regression** menunjukkan performa terbaik berdasarkan keempat metrik, khususnya dengan nilai **Recall sebesar 90%** dan **F1-Score tertinggi (84.9%)**, menjadikannya model yang paling andal dan seimbang antara sensitivitas dan presisi.
 
-**Hubungan dengan Business Understanding:**
+#### Relevansi terhadap Business Goals:
 
-- **Problem Statement:**  
-  Tujuan proyek ini adalah untuk membantu memprediksi risiko penyakit jantung berdasarkan data pasien. Model Logistic Regression mampu mengklasifikasikan risiko dengan cukup baik dan akurat, menjawab kebutuhan sistem prediksi yang cepat dan andal di lingkungan medis.
+- **Problem Statement**:  
+  Tujuan proyek adalah memprediksi risiko penyakit jantung secara akurat. Logistic Regression berhasil mengidentifikasi 90% pasien berisiko secara benar (tinggi recall), sekaligus menjaga presisi yang baik.
 
-- **Goal yang Diharapkan:**  
-  Model bertujuan memberikan prediksi **yang akurat dan mudah diinterpretasi** bagi tenaga medis. Dengan 86% akurasi dan kemampuan interpretasi koefisien yang dimiliki Logistic Regression, goal ini berhasil dicapai.
+- **Target Solusi**:  
+  Diperlukan model yang **mudah diinterpretasi** dan **tidak melewatkan pasien berisiko**. Logistic Regression, sebagai model linear, memungkinkan tenaga medis membaca bobot tiap fitur (koefisien) untuk pengambilan keputusan yang transparan.
 
-- **Dampak Solusi:**  
-  Penggunaan model ini dapat membantu dokter dan klinik dalam melakukan **skrining awal terhadap pasien** tanpa perlu pemeriksaan mahal terlebih dahulu. Pasien berisiko tinggi dapat segera diarahkan ke pemeriksaan lanjutan, sementara pasien dengan risiko rendah dapat meminimalkan biaya dan waktu tunggu. Ini memberikan **efisiensi operasional dan peningkatan kualitas layanan medis**.
+- **Dampak Solusi**:  
+  Implementasi model ini memungkinkan **skrining awal** secara cepat dan efisien, mengurangi kebutuhan tes mahal pada tahap awal, serta membantu **prioritas penanganan pasien** secara preventif.
 
 ### Kesimpulan
 
